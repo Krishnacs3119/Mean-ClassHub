@@ -1,0 +1,165 @@
+<div class="post-detail-container px-3 py-5">
+    <div class="mb-5">
+        <button (click)="closeTab()" class="btn btn-light rounded-pill shadow-sm px-4 py-2 border hover-translate-x">
+            <i class="bi bi-x-lg me-2"></i> {{ isTeacher() ? 'Close Post' : 'Dismiss Post' }}
+        </button>
+    </div>
+
+    <div class="row post-inner">
+        <div class="col-lg-8">
+            <div *ngIf="isLoading" class="skeleton-card p-4 card mb-4">
+                <div class=" skeleton-avatar mb-3"></div>
+                <div class=" skeleton-line mb-3" style="width: 80%"></div>
+                <div class=" skeleton-line mb-3" style="width: 100%; height: 200px"></div>
+            </div>
+
+            <div *ngIf="post" class="card post-card border-0 shadow-sm p-4 animate-fade-in mb-4">
+                <div class="d-flex justify-content-between mb-4">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                            style="width: 50px; height: 50px; font-size: 1.2rem;">
+                            {{ post.author?.name ? post.author.name[0] : '?' }}
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">{{ post.author?.name }}</h5>
+                            <small class="text-muted">{{ post.createdAt | date:'MMM d, y, h:mm a' }}</small>
+                        </div>
+                    </div>
+                    <div class="badge bg-light text-primary border rounded-pill px-3 py-2 align-self-start">{{ post.type
+                        |
+                        uppercase }}</div>
+                </div>
+
+                <h2 class="fw-bold mb-3">{{ post.title }}</h2>
+                <div *ngIf="post.dueDate" class="text-danger small fw-bold mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-clock"></i> Due: {{ post.dueDate | date:'medium' }}
+                </div>
+
+                <p class="fs-5 post-content" style="white-space: pre-wrap;">{{ post.content }}</p>
+
+                <!-- Attachments Rendering -->
+                <div *ngIf="post.files?.length" class="mt-4">
+                    <h6 class="fw-bold text-muted mb-3"><i class="bi bi-paperclip"></i> Resources</h6>
+                    <div *ngFor="let file of post.files"
+                        class="rounded-3 border overflow-hidden bg-light mb-2 max-w-400">
+                        <img *ngIf="file.fileType.startsWith('image/')" [src]="'http://localhost:5000'+file.url"
+                            class="img-fluid w-100" alt="post attachment">
+                        <div *ngIf="!file.fileType.startsWith('image/')" class="p-3 d-flex align-items-center gap-3">
+                            <div class="bg-primary text-white p-2 rounded">
+                                <i class="bi bi-file-earmark-text fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="text-truncate fw-bold small">{{ file.filename }}</div>
+                                <div class="text-muted small">{{ (file.size / 1024 / 1024) | number:'1.1-1' }} MB</div>
+                            </div>
+                            <a [href]="'http://localhost:5000'+file.url" target="_blank"
+                                class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Submission Section for Students -->
+            <div *ngIf="post?.type === 'assignment' && !isTeacher()"
+                class="card border-0 shadow-sm p-4 sticky-top-detail">
+                <h5 class="fw-bold mb-4">Your work</h5>
+                <div *ngIf="!submission" class="assignment-form">
+                    <textarea class="form-control mb-3" rows="6" [(ngModel)]="newSubmission.content"
+                        [disabled]="isSubmitting" placeholder="Type your response here..."></textarea>
+                    <button class="btn btn-primary w-100 rounded-pill py-2" (click)="submitAssignment()"
+                        [disabled]="isSubmitting || !newSubmission.content">
+                        <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+                        Submit Work
+                    </button>
+                </div>
+                <div *ngIf="submission" class="submission-status text-center py-3">
+                    <div
+                        class="status-badge mb-3 d-inline-block px-4 py-2 rounded-pill bg-success-subtle text-success fw-bold">
+                        <i class="bi bi-check-circle-fill me-2"></i> Turned in
+                    </div>
+                    <p class="text-muted small">Submitted on {{ submission.submittedAt | date:'MMM d, h:mm a' }}</p>
+
+                    <!-- Student Grade View -->
+                    <div *ngIf="submission.grade !== undefined && submission.grade !== null"
+                        class="grade-box mt-4 p-3 bg-primary bg-opacity-10 rounded-4 border border-primary border-opacity-25 shadow-sm">
+                        <h6 class="text-muted small fw-bold text-uppercase mb-2">Your Grade</h6>
+                        <h2 class="fw-bold mb-1 text-primary">{{ submission.grade }} / 100</h2>
+                        <p *ngIf="submission.feedback" class="text-muted mb-0 fst-italic mt-2">"{{ submission.feedback
+                            }}"</p>
+                    </div>
+
+                    <div *ngIf="submission.grade === undefined || submission.grade === null"
+                        class="mt-4 p-3 bg-light rounded-4 border border-dashed">
+                        <p class="text-muted mb-0 small"><i class="bi bi-hourglass-split me-1"></i> Waiting for
+                            teacher's grading</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher Submissions List -->
+            <div *ngIf="post?.type === 'assignment' && isTeacher()"
+                class="card border-0 shadow-sm p-4 sticky-top-detail max-h-submissions">
+                <h5 class="fw-bold mb-4">Submissions ({{ allSubmissions.length }})</h5>
+                <div *ngFor="let sub of allSubmissions"
+                    class="submission-item p-3 border rounded-3 mb-3 hover-shadow-sm cursor-pointer"
+                    (click)="selectedSubmission = sub; gradingData.grade = sub.grade; gradingData.feedback = sub.feedback">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center fw-bold"
+                            style="width: 32px; height: 32px; font-size: 0.8rem">
+                            {{ sub.student?.name ? sub.student.name[0] : '?' }}
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 small">{{ sub.student?.name }}</h6>
+                            <small class="text-muted extra-small" *ngIf="sub.grade === undefined">Pending
+                                grading</small>
+                            <small class="text-success extra-small fw-bold" *ngIf="sub.grade !== undefined">Graded: {{
+                                sub.grade }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="allSubmissions.length === 0" class="text-center py-5 opacity-50">
+                    <i class="bi bi-clipboard-x fs-1"></i>
+                    <p class="mt-2 small">No submissions yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Grade Sidebar/Overlay -->
+<div *ngIf="selectedSubmission" class="grading-overlay" (click)="selectedSubmission = null">
+    <div class="grading-panel animate-slide-left p-5" (click)="$event.stopPropagation()">
+        <div class="d-flex justify-content-between mb-4">
+            <h4 class="fw-bold">Grade Submission</h4>
+            <button class="btn-close" (click)="selectedSubmission = null"></button>
+        </div>
+        <div class="mb-4">
+            <h6 class="fw-bold text-muted small text-uppercase">Student</h6>
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-primary text-white p-2"
+                    style="width: 40px; height: 40px; text-align: center">{{ selectedSubmission.student?.name[0] }}
+                </div>
+                <h5 class="mb-0 fw-bold">{{ selectedSubmission.student?.name }}</h5>
+            </div>
+        </div>
+        <div class="mb-4">
+            <h6 class="fw-bold text-muted small text-uppercase">Response</h6>
+            <p class="bg-light p-3 rounded-4 border">{{ selectedSubmission.content }}</p>
+        </div>
+        <hr class="my-5">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Grade / 100</label>
+            <input type="number" class="form-control" [(ngModel)]="gradingData.grade">
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold">Feedback</label>
+            <textarea class="form-control" rows="4" [(ngModel)]="gradingData.feedback"></textarea>
+        </div>
+        <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm"
+            (click)="gradeSubmission(selectedSubmission._id)">Save Grade</button>
+    </div>
+</div>

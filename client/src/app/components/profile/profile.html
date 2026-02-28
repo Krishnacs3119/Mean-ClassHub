@@ -1,0 +1,92 @@
+<div class="container py-5 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-lg rounded-5 overflow-hidden animate-fade-in profile-card">
+                <div class="card-header bg-primary text-white p-5 text-center position-relative">
+                    <div class="profile-img-container shadow-lg bg-white p-1 rounded-circle">
+                        <img [src]="getAvatar(user)" class="rounded-circle w-100 h-100 object-fit-cover"
+                            alt="profile pic">
+                    </div>
+                </div>
+                <div class="card-body p-5 pt-5 text-center">
+                    <div *ngIf="!isEditing">
+                        <h2 class="fw-bold mb-1">{{ user?.name }}</h2>
+                    </div>
+                    <div *ngIf="isEditing" class="mb-2">
+                        <input type="text"
+                            class="form-control form-control-lg text-center fw-bold rounded-pill border-2"
+                            [(ngModel)]="editName" placeholder="Enter name">
+                    </div>
+
+                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 mb-4 fw-normal border">
+                        <i class="bi bi-shield-check me-1"></i> {{ user?.role | uppercase }}
+                    </span>
+
+                    <div class="row g-4 mt-2">
+                        <div class="col-12">
+                            <div class="p-3 bg-light rounded-4 border-dashed text-start">
+                                <small class="text-muted fw-bold text-uppercase d-block mb-1 ms-1">Email Address</small>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-white p-2 rounded-3 shadow-sm text-primary">
+                                        <i class="bi bi-envelope"></i>
+                                    </div>
+                                    <span class="fs-5 fw-medium text-dark">{{ user?.email }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12" *ngIf="user?.role === 'teacher'">
+                            <div class="p-3 bg-light rounded-4 border-dashed text-start">
+                                <small class="text-muted fw-bold text-uppercase d-block mb-1 ms-1">Classes
+                                    Created</small>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-white p-2 rounded-3 shadow-sm text-primary">
+                                        <i class="bi bi-mortarboard"></i>
+                                    </div>
+                                    <span class="fs-5 fw-medium text-dark">{{ user?.createdClasses?.length || 0 }}
+                                        Classrooms</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12" *ngIf="user?.role === 'student'">
+                            <div class="p-3 bg-light rounded-4 border-dashed text-start">
+                                <small class="text-muted fw-bold text-uppercase d-block mb-1 ms-1">Classes
+                                    Enrolled</small>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-white p-2 rounded-3 shadow-sm text-primary">
+                                        <i class="bi bi-book"></i>
+                                    </div>
+                                    <span class="fs-5 fw-medium text-dark">{{ user?.enrolledClasses?.length || 0 }}
+                                        Classrooms</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 d-flex gap-2 justify-content-center">
+                        <ng-container *ngIf="!isEditing">
+                            <button class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm"
+                                (click)="toggleEdit()">
+                                <i class="bi bi-pencil me-2"></i> Edit Profile
+                            </button>
+                            <button class="btn btn-outline-primary rounded-pill px-4 py-2" routerLink="/dashboard">
+                                Dashboard
+                            </button>
+                        </ng-container>
+
+                        <ng-container *ngIf="isEditing">
+                            <button class="btn btn-success rounded-pill px-5 py-2 fw-bold shadow-sm"
+                                (click)="saveName()">
+                                <i class="bi bi-check2-circle me-2"></i> Save Changes
+                            </button>
+                            <button class="btn btn-light border rounded-pill px-4 py-2" (click)="toggleEdit()">
+                                Cancel
+                            </button>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

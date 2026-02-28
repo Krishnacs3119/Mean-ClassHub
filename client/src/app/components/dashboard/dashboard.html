@@ -1,0 +1,152 @@
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="fw-bold mb-1">My Classrooms</h1>
+            <p class="text-muted">Welcome back, {{ user?.name }}</p>
+        </div>
+        <div>
+            <button *ngIf="user?.role === 'teacher'" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
+                data-bs-toggle="modal" data-bs-target="#createClassModal">
+                <i class="bi bi-plus-lg"></i> Create Class
+            </button>
+            <button *ngIf="user?.role === 'student'" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
+                data-bs-toggle="modal" data-bs-target="#joinClassModal">
+                <i class="bi bi-person-plus"></i> Join Class
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Skeletons -->
+    <div *ngIf="isLoading" class="row g-4">
+        <div *ngFor="let item of [1,2,3,4]" class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="skeleton" style="height: 140px;"></div>
+                <div class="card-body p-4">
+                    <div class="skeleton mb-2" style="height: 20px; width: 80%;"></div>
+                    <div class="skeleton" style="height: 15px; width: 40%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && classes.length === 0" class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-journal-x text-muted" style="font-size: 5rem;"></i>
+        </div>
+        <h3>No classes yet</h3>
+        <p class="text-muted">You haven't {{ user?.role === 'teacher' ? 'created' : 'joined' }} any classes yet.</p>
+        <button *ngIf="user?.role === 'teacher'" class="btn btn-outline-primary mt-3" data-bs-toggle="modal"
+            data-bs-target="#createClassModal">Create your first class</button>
+        <button *ngIf="user?.role === 'student'" class="btn btn-outline-primary mt-3" data-bs-toggle="modal"
+            data-bs-target="#joinClassModal">Join a class</button>
+    </div>
+
+    <!-- Classes Grid -->
+    <div *ngIf="!isLoading && classes.length > 0" class="row g-4">
+        <div *ngFor="let cls of classes" class="col-md-6 col-lg-3 animate-fade-in">
+            <div class="card border-0 shadow-sm h-100 classroom-card" [routerLink]="['/class', cls._id]"
+                style="cursor: pointer;">
+                <div class="card-header border-0 p-4 d-flex flex-column justify-content-between text-white"
+                    [style.background]="'linear-gradient(135deg, var(--primary), #8b5cf6)'" style="height: 140px;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="fw-bold mb-0 text-truncate w-75">{{ cls.className }}</h5>
+                        <div class="dropdown" (click)="$event.stopPropagation()">
+                            <i class="bi bi-three-dots-vertical" data-bs-toggle="dropdown" style="cursor: pointer;"></i>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-archive me-2"></i> Archive</a>
+                                </li>
+                                <li *ngIf="user?.role === 'teacher'"><a class="dropdown-item text-danger" href="#"><i
+                                            class="bi bi-trash me-2"></i> Delete</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="mb-0 small opacity-75">{{ cls.subject }}</p>
+                        <p class="mb-0 small opacity-75">{{ cls.section }}</p>
+                    </div>
+                </div>
+                <div class="card-body p-4 position-relative">
+                    <div class="teacher-avatar position-absolute" style="top: -30px; right: 20px;">
+                        <div class="rounded-circle bg-white p-1 shadow-sm">
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
+                                style="width: 50px; height: 50px; font-size: 0.9rem;">
+                                {{ getInitials(cls.teacher?.name || 'User') }}
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-0 mt-2">Teacher</p>
+                    <p class="fw-medium mb-3">{{ cls.teacher?.name }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-light text-muted border px-2 py-1">Code: {{ cls.classCode }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Class Modal -->
+<div class="modal fade" id="createClassModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Create new class</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form #createForm="ngForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Class Name</label>
+                        <input type="text" class="form-control py-2 shadow-none" name="cname"
+                            [(ngModel)]="newClass.className" required placeholder="e.g. Advanced Mathematics">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Subject</label>
+                        <input type="text" class="form-control py-2 shadow-none" name="subj"
+                            [(ngModel)]="newClass.subject" required placeholder="e.g. Algebra">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium">Section</label>
+                            <input type="text" class="form-control py-2 shadow-none" name="sect"
+                                [(ngModel)]="newClass.section" placeholder="e.g. Semester 2">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium">Category</label>
+                            <select class="form-select py-2 shadow-none" name="cat" [(ngModel)]="newClass.category">
+                                <option value="General">General</option>
+                                <option value="Math">Math</option>
+                                <option value="Science">Science</option>
+                                <option value="Language">Language</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary w-100 py-2 mt-3" (click)="onCreateClass()"
+                        data-bs-dismiss="modal" [disabled]="!createForm.valid">Create Class</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Join Class Modal -->
+<div class="modal fade" id="joinClassModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Join a class</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small">Ask your teacher for the class code, then enter it below.</p>
+                <div class="mb-3">
+                    <input type="text" class="form-control py-3 text-center fw-bold fs-5 shadow-none" name="jcode"
+                        [(ngModel)]="joinCode" placeholder="SUBJ-XXX-YYYY">
+                </div>
+                <button type="button" class="btn btn-primary w-100 py-2" (click)="onJoinClass()" data-bs-dismiss="modal"
+                    [disabled]="!joinCode">Join Class</button>
+            </div>
+        </div>
+    </div>
+</div>

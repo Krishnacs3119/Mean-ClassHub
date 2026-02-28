@@ -1,0 +1,388 @@
+<div class="container py-4">
+    <!-- Class Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4 animate-fade-in">
+        <div class="p-5 text-white" [style.background]="'linear-gradient(135deg, var(--primary), #8b5cf6)'">
+            <div class="d-flex justify-content-between align-items-end h-100">
+                <div>
+                    <h1 class="fw-bold mb-1">{{ classroom?.className }}</h1>
+                    <h5 class="fw-normal opacity-75">{{ classroom?.subject }} - {{ classroom?.section }}</h5>
+                </div>
+                <div
+                    class="bg-white bg-opacity-25 backdrop-blur rounded-3 p-3 text-center border border-white border-opacity-25 shadow-sm">
+                    <small class="d-block opacity-75 mb-1">Class Code</small>
+                    <h4 class="fw-bold mb-0 text-white">{{ classroom?.classCode }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-0 px-4">
+            <ul class="nav nav-pills card-header-pills py-2 gap-2">
+                <li class="nav-item">
+                    <button class="nav-link border-0" [class.active]="activeTab === 'stream'"
+                        (click)="activeTab = 'stream'">Stream</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link border-0" [class.active]="activeTab === 'people'"
+                        (click)="activeTab = 'people'">People</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link border-0" [class.active]="activeTab === 'about'"
+                        (click)="activeTab = 'about'">About</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Sidebar Info (Always visible) -->
+        <div class="col-12 col-lg-3">
+            <div class="card border-0 shadow-sm mb-4 p-4 rounded-4">
+                <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-calendar-event text-primary"></i> Upcoming
+                </h6>
+                <div *ngIf="upcomingAssignments.length > 0; else noWork">
+                    <div *ngFor="let ass of upcomingAssignments.slice(0, 3)" (click)="openPost(ass._id)"
+                        class="mb-3 hover-effect shadow-hover p-2 rounded-3 border-start border-4 border-primary shadow-sm-hover transition-all cursor-pointer">
+                        <h6 class="small fw-bold mb-1 text-truncate">{{ ass.title }}</h6>
+                        <p class="text-danger extra-small mb-0"><i class="bi bi-clock"></i> Due {{ ass.dueDate |
+                            date:'MMM d' }}</p>
+                    </div>
+                    <button class="btn btn-link text-primary text-decoration-none small fw-bold p-0 mt-2 hover-lift"
+                        (click)="activeTab = 'stream'; scrollToTop()">View all</button>
+                </div>
+                <ng-template #noWork>
+                    <p class="text-muted small mb-0">Woohoo, no work due soon!</p>
+                </ng-template>
+            </div>
+        </div>
+
+        <!-- Main Content Feed -->
+        <div class="col-lg-9">
+            <!-- Stream Tab -->
+            <ng-container *ngIf="activeTab === 'stream'">
+                <!-- Post Creation -->
+                <div *ngIf="isTeacher()" class="card border-0 shadow-sm mb-4 p-4 rounded-4 animate-fade-in">
+                    <div class="d-flex gap-3 mb-3">
+                        <img [src]="getAvatar(authService.userValue)" class="rounded-circle" width="45" height="45"
+                            alt="user">
+                        <div class="flex-grow-1">
+                            <input type="text" class="form-control bg-light border-0 py-2 shadow-none mb-2"
+                                [(ngModel)]="newPost.title" placeholder="Post title / Announcement header">
+                            <textarea class="form-control bg-light border-0 py-2 shadow-none" rows="3"
+                                [(ngModel)]="newPost.content"
+                                placeholder="Share something with your class..."></textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-2 align-items-center">
+                            <input type="file" #fileInput class="d-none" (change)="onFileSelected($event)">
+                            <button type="button" class="btn btn-light rounded-pill px-3 py-1 btn-sm"
+                                (click)="fileInput.click()">
+                                <i class="bi bi-paperclip me-1"></i> Attach
+                            </button>
+                            <span *ngIf="selectedFile" class="badge bg-primary-subtle text-primary rounded-pill small">
+                                {{ selectedFile.name }}
+                                <i class="bi bi-x-circle ms-1" style="cursor: pointer"
+                                    (click)="selectedFile = null; fileInput.value = ''"></i>
+                            </span>
+                            <select class="form-select-sm border-0 bg-light rounded-pill px-3"
+                                [(ngModel)]="newPost.type">
+                                <option value="note">Note</option>
+                                <option value="announcement">Announcement</option>
+                                <option value="assignment">Assignment</option>
+                            </select>
+                            <input *ngIf="newPost.type === 'assignment'" type="date"
+                                class="form-control-sm border-0 bg-light rounded-pill px-3"
+                                [(ngModel)]="newPost.dueDate" placeholder="Due Date">
+                        </div>
+                        <button class="btn btn-primary px-4 rounded-pill" (click)="createPost()"
+                            [disabled]="!newPost.title || !newPost.content || isPosting">
+                            <span *ngIf="isPosting" class="spinner-border spinner-border-sm me-2"></span>
+                            Post
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Posts List -->
+                <div *ngIf="isLoading" class="d-flex flex-column gap-4">
+                    <div *ngFor="let i of [1,2,3]" class="card border-0 shadow-sm p-4 rounded-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="skeleton rounded-circle" style="width: 45px; height: 45px;"></div>
+                            <div class="flex-grow-1">
+                                <div class="skeleton mb-2" style="height: 15px; width: 30%;"></div>
+                                <div class="skeleton" style="height: 12px; width: 20%;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton mb-2" style="height: 20px; width: 100%;"></div>
+                        <div class="skeleton" style="height: 60px; width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div *ngIf="!isLoading && posts.length === 0" class="text-center py-5">
+                    <img src="assets/img/empty-stream.svg" class="mb-4" width="200" alt="empty" style="opacity: 0.5;">
+                    <h5 class="text-muted">This classroom stream is empty</h5>
+                    <p class="text-muted small">Posts and announcements from the teacher will appear here.</p>
+                </div>
+
+                <div *ngFor="let post of posts"
+                    class="card border-0 shadow-sm mb-4 rounded-4 animate-fade-in post-card">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="d-flex gap-3">
+                                <div class="rounded-circle bg-primary-subtle d-flex align-items-center justify-content-center text-primary fw-bold"
+                                    style="width: 45px; height: 45px;">
+                                    {{ post.author?.name ? post.author.name[0] : '?' }}
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-0">{{ post.author?.name }}</h6>
+                                    <small class="text-muted">{{ post.createdAt | date:'MMM d, h:mm a' }}</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="badge bg-light text-primary border px-3 py-2 rounded-pill">{{ post.type |
+                                    uppercase }}</div>
+                                <div class="dropdown" *ngIf="isPostAuthor(post)">
+                                    <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                        <li><button class="dropdown-item d-flex align-items-center gap-2"
+                                                data-bs-toggle="modal" data-bs-target="#editPostModal"
+                                                (click)="editPost(post)">
+                                                <i class="bi bi-pencil"></i> Edit Post
+                                            </button></li>
+                                        <li><button class="dropdown-item text-danger d-flex align-items-center gap-2"
+                                                (click)="deletePost(post._id)">
+                                                <i class="bi bi-trash"></i> Delete Post
+                                            </button></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div (click)="openPost(post._id)" class="cursor-pointer">
+                            <h5 class="fw-bold d-flex align-items-center gap-2">
+                                <span class="text-dark hover-primary">{{ post.title }}</span>
+                                <span *ngIf="post.dueDate"
+                                    class="badge bg-danger-subtle text-danger small rounded-pill fw-normal"
+                                    style="font-size: 0.7rem;">
+                                    <i class="bi bi-clock me-1"></i> Due {{ post.dueDate | date:'mediumDate' }}
+                                </span>
+                            </h5>
+                            <p class="text-dark mb-3" style="white-space: pre-wrap;">{{ post.content }}</p>
+                        </div>
+
+                        <!-- Attachments Rendering -->
+                        <div *ngIf="post.files?.length" class="mb-4">
+                            <div *ngFor="let file of post.files" class="rounded-3 border overflow-hidden bg-light"
+                                style="max-width: 400px;">
+                                <img *ngIf="file.fileType.startsWith('image/')" [src]="getFileUrl(file.url)"
+                                    class="img-fluid w-100" alt="post attachment">
+                                <div *ngIf="!file.fileType.startsWith('image/')"
+                                    class="p-3 d-flex align-items-center gap-3">
+                                    <div class="bg-primary text-white p-2 rounded">
+                                        <i class="bi bi-file-earmark-text fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="text-truncate fw-bold small">{{ file.filename }}</div>
+                                        <div class="text-muted" style="font-size: 0.7rem;">{{ (file.size / 1024 / 1024)
+                                            | number:'1.1-1' }} MB</div>
+                                    </div>
+                                    <a [href]="getFileUrl(file.url)" target="_blank"
+                                        class="btn btn-outline-primary btn-sm rounded-pill">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-4 border-top pt-3">
+                            <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-2"
+                                [class.text-primary]="post.likes?.includes(authService.userValue?.id)"
+                                (click)="likePost(post)">
+                                <i class="bi" [class.bi-heart-fill]="post.likes?.includes(authService.userValue?.id)"
+                                    [class.bi-heart]="!post.likes?.includes(authService.userValue?.id)"></i>
+                                <span class="fw-medium">{{ post.likes?.length || 0 }}</span>
+                            </button>
+                            <button
+                                class="btn btn-link text-muted text-decoration-none p-0 d-flex align-items-center gap-2">
+                                <i class="bi bi-chat-left"></i>
+                                <span class="fw-medium">{{ post.comments?.length || 0 }} Comments</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="bg-light p-4 rounded-bottom-4 border-top">
+                        <div *ngFor="let comment of post.comments" class="d-flex gap-3 mb-3">
+                            <div class="rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center text-secondary fw-bold"
+                                style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                {{ comment.author?.name ? comment.author.name[0] : '?' }}
+                            </div>
+                            <div class="bg-white p-3 rounded-4 shadow-sm flex-grow-1">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold small">{{ comment.author?.name }}</span>
+                                    <span class="text-muted" style="font-size: 0.7rem;">{{ comment.createdAt |
+                                        date:'shortTime' }}</span>
+                                </div>
+                                <p class="mb-0 small">{{ comment.text }}</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <img [src]="getAvatar(authService.userValue)" class="rounded-circle" width="32" height="32"
+                                alt="me">
+                            <div class="input-group">
+                                <input type="text" #commentInput
+                                    class="form-control form-control-sm border-0 shadow-none px-3 py-2 bg-white rounded-pill"
+                                    placeholder="Write a comment...">
+                                <button class="btn btn-primary btn-sm rounded-pill ms-2 px-3"
+                                    (click)="addComment(post, commentInput.value); commentInput.value=''">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- End Post Card -->
+            </ng-container>
+
+            <!-- People Tab -->
+            <ng-container *ngIf="activeTab === 'people'">
+                <div class="col-12 p-4">
+                    <div class="mb-5">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                            <h3 class="fw-bold text-primary mb-0">Teachers</h3>
+                            <i class="bi bi-person-plus text-primary fs-4" style="cursor: pointer;"></i>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 mb-3 p-2">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                                style="width: 45px; height: 45px;">
+                                {{ classroom?.teacher?.name ? classroom.teacher.name[0] : '?' }}
+                            </div>
+                            <h6 class="fw-bold mb-0">{{ classroom?.teacher?.name }} <span
+                                    class="badge bg-primary-subtle text-primary ms-2 fw-normal">Owner</span></h6>
+                        </div>
+                        <div *ngFor="let co of classroom?.coTeachers" class="d-flex align-items-center gap-3 mb-3 p-2">
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold"
+                                style="width: 45px; height: 45px;">
+                                {{ co.name ? co.name[0] : '?' }}
+                            </div>
+                            <h6 class="fw-bold mb-0">{{ co.name }}</h6>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                            <h3 class="fw-bold text-primary mb-0">Students</h3>
+                            <span class="text-muted">{{ classroom?.students?.length || 0 }} students</span>
+                        </div>
+                        <div *ngFor="let student of classroom?.students"
+                            class="d-flex align-items-center gap-3 mb-3 p-2">
+                            <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center fw-bold"
+                                style="width: 45px; height: 45px;">
+                                {{ student.name ? student.name[0] : '?' }}
+                            </div>
+                            <h6 class="fw-bold mb-0">{{ student.name }}</h6>
+                            <button *ngIf="isTeacher()" class="btn btn-link text-danger p-0 ms-auto"
+                                (click)="removeStudent(student._id)">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                        <div *ngIf="!classroom?.students?.length" class="text-center py-4">
+                            <p class="text-muted">No students enrolled yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+
+            <!-- About Tab -->
+            <ng-container *ngIf="activeTab === 'about'">
+                <div class="col-12 p-4">
+                    <div class="card border-0 shadow-sm p-4 p-md-5 rounded-4 mb-4">
+                        <h2 class="fw-bold text-primary mb-4">About this class</h2>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="text-muted small fw-bold text-uppercase d-block mb-1">Subject</label>
+                                <p class="fs-5 fw-medium">{{ classroom?.subject }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small fw-bold text-uppercase d-block mb-1">Room /
+                                    Section</label>
+                                <p class="fs-5 fw-medium">{{ classroom?.section || 'N/A' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small fw-bold text-uppercase d-block mb-1">Category</label>
+                                <p class="fs-5 fw-medium">{{ classroom?.category || 'General' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small fw-bold text-uppercase d-block mb-1">Class Code</label>
+                                <p class="fs-5 fw-medium font-monospace text-primary">{{ classroom?.classCode }}</p>
+                            </div>
+                        </div>
+
+                        <hr class="my-5 opacity-10">
+
+                        <h4 class="fw-bold mb-3">Course Description</h4>
+                        <p class="text-muted" style="line-height: 1.8;">
+                            {{ classroom?.description || 'Welcome to ' + classroom?.className + '. Materials,
+                            assignments,
+                            and announcements will be posted regularly by the instructor.' }}
+                        </p>
+
+                        <div
+                            class="mt-5 p-4 bg-primary bg-opacity-10 rounded-4 border border-primary border-opacity-10 d-flex gap-4 align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-4"
+                                style="width: 60px; height: 60px;">
+                                {{ classroom?.teacher?.name ? classroom.teacher.name[0] : '?' }}
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-1">{{ classroom?.teacher?.name }}</h5>
+                                <p class="text-muted small mb-0">Primary Instructor & Course Coordinator</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+        </div> <!-- End col-lg-9 -->
+    </div> <!-- End row g-4 -->
+</div> <!-- End container -->
+
+<!-- Edit Post Modal -->
+<div class="modal fade" id="editPostModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Edit Post</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"
+                    (click)="cancelEdit()"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Title</label>
+                    <input type="text" class="form-control bg-light border-0 py-2 shadow-none"
+                        [(ngModel)]="editData.title" [disabled]="isUpdating">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Content</label>
+                    <textarea class="form-control bg-light border-0 py-2 shadow-none" rows="5"
+                        [(ngModel)]="editData.content" [disabled]="isUpdating"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Due Date (Optional)</label>
+                    <input type="date" class="form-control bg-light border-0 py-2 shadow-none"
+                        [(ngModel)]="editData.dueDate" [disabled]="isUpdating">
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal"
+                    [disabled]="isUpdating" (click)="cancelEdit()">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" [disabled]="isUpdating"
+                    (click)="updatePost()">
+                    <span *ngIf="isUpdating" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ isUpdating ? 'Saving...' : 'Save Changes' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Manual Trigger Logic (to ensure dismissal after save) -->
+<button #closeEditModalBtn id="closeEditModalBtn" type="button" class="d-none" data-bs-dismiss="modal"></button>

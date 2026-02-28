@@ -1,0 +1,13 @@
+{
+  "name": "classhub",
+  "version": "1.0.0",
+  "description": "Premium Educational Platform",
+  "scripts": {
+    "start:server": "cd server && npm start",
+    "start:client": "cd client && npm start",
+    "dev:server": "cd server && node server.js",
+    "dev:client": "cd client && npx -y ng serve",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "dependencies": {}
+}

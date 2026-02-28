@@ -1,0 +1,87 @@
+.profile-card {
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 2.5rem !important;
+}
+
+.profile-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    height: 180px;
+    background-image: linear-gradient(135deg, #4f46e5, #8b5cf6, #ec4899);
+    background-size: 200% 200%;
+    animation: gradientShift 10s ease infinite;
+    border-bottom: 0;
+    border-radius: 0 !important;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.profile-img-container {
+    width: 140px;
+    height: 140px;
+    position: absolute;
+    bottom: -70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.card-body {
+    border-radius: 0 0 2.5rem 2.5rem;
+    padding-top: 130px !important;
+}
+
+.animate-fade-in {
+    animation: profileFadeIn 0.8s ease-out forwards;
+}
+
+@keyframes profileFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.form-control-lg:focus {
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    border-color: #4f46e5 !important;
+}
+
+.btn-primary,
+.btn-success {
+    padding-inline: 40px;
+    border-radius: 100px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary {
+    border-radius: 100px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.border-dashed {
+    border: 2px dashed #e5e7eb;
+}
