@@ -136,7 +136,7 @@ export class ClassroomComponent implements OnInit {
   }
 
   getFileUrl(url: string): string {
-    return `http://localhost:5000${url}`;
+    return `https://s074-classhub.onrender.com${url}`;
   }
 
   openPost(postId: string) {
