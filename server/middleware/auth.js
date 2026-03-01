@@ -25,6 +25,10 @@ exports.protect = async (req, res, next) => {
         req.user = await User.findById(decoded.id);
         console.log('[DEBUG] User found in protect:', req.user?._id || 'NOT FOUND');
 
+        if (!req.user) {
+            return res.status(401).json({ message: 'User belonging to this token no longer exists. Please log out and log back in.' });
+        }
+
         next();
     } catch (err) {
         return res.status(401).json({ message: 'Not authorized to access this route' });

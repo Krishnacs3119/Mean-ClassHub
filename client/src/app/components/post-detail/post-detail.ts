@@ -65,7 +65,7 @@ export class PostDetailComponent implements OnInit {
     }
 
     loadSubmission() {
-        const url = `https://s074-classhub.onrender.com/api/posts/${this.postId}/submissions`;
+        const url = `https://classhub-api-f2ca.onrender.com/api/posts/${this.postId}/submissions`;
         this.http.get<any>(url).subscribe({
             next: (res) => {
                 if (this.isTeacher()) {
@@ -81,7 +81,7 @@ export class PostDetailComponent implements OnInit {
     submitAssignment() {
         if (!this.newSubmission.content.trim()) return;
         this.isSubmitting = true;
-        const url = `https://s074-classhub.onrender.com/api/posts/${this.postId}/submissions`;
+        const url = `https://classhub-api-f2ca.onrender.com/api/posts/${this.postId}/submissions`;
         this.http.post<any>(url, this.newSubmission).subscribe({
             next: (res) => {
                 this.toastr.success('Assignment submitted!');
@@ -96,7 +96,7 @@ export class PostDetailComponent implements OnInit {
     }
 
     gradeSubmission(subId: string) {
-        const url = `https://s074-classhub.onrender.com/api/posts/submissions/${subId}/grade`;
+        const url = `https://classhub-api-f2ca.onrender.com/api/posts/submissions/${subId}/grade`;
         this.http.put<any>(url, this.gradingData).subscribe({
             next: (res) => {
                 this.toastr.success('Graded successfully');

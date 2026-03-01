@@ -136,7 +136,7 @@ export class ClassroomComponent implements OnInit {
   }
 
   getFileUrl(url: string): string {
-    return `https://s074-classhub.onrender.com${url}`;
+    return `https://classhub-api-f2ca.onrender.com${url}`;
   }
 
   openPost(postId: string) {
