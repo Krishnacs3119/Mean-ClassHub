@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
     providedIn: 'root'
 })
 export class AuthService {
-    private apiUrl = 'https://s074-classhub.onrender.com/api/auth';
+    private apiUrl = 'https://classhub-api-f2ca.onrender.com/api/auth';
     private currentUserSubject = new BehaviorSubject<any>(null);
     public currentUser$ = this.currentUserSubject.asObservable();
 
